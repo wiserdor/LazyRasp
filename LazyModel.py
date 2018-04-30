@@ -13,11 +13,11 @@ from keras.backend import tensorflow_backend as K
 
 
 class LazyModel:
-    def __init__(self,server=None,model_name='model5',num_of_batch=25):
+    def __init__(self,server=None,model_name='model5',num_of_batch=15):
         self.camera=picamera.PiCamera()
-        self.camera.resolution = (320,240)
+        self.camera.resolution = (132,100)
         self.camera.rotation=180
-        self.camera.framerate=15
+        self.camera.framerate=10
         self.num_of_batch=num_of_batch
         self.img_list=[]
         self.img_path='./images'
@@ -63,20 +63,21 @@ class LazyModel:
                     pulling_hand_in=0
                     pulling_hand_away=0
                     for a in conclusion:
-                        other_things+=a[0]*100
-                        drumming_fingers=a[1]*100
-                        pulling_hand_in+=a[2]*100
-                        pulling_hand_away+=a[3]*100
-                    other_things/=self.num_of_batch
-                    drumming_fingers/=self.num_of_batch
-                    pulling_hand_in/=self.num_of_batch
-                    pulling_hand_away/=self.num_of_batch
+                        other_things+=a[0]
+                        drumming_fingers+=a[1]
+                        pulling_hand_in+=a[2]
+                        pulling_hand_away+=a[3]
+                    print(other_things+drumming_fingers+pulling_hand_in+pulling_hand_away)
+                    other_things/=(self.num_of_batch)
+                    drumming_fingers/=(self.num_of_batch)
+                    pulling_hand_in/=(self.num_of_batch)
+                    pulling_hand_away/=(self.num_of_batch)
                     print('===========================================')
                     print(conclusion)
-                    print('other things:',other_things,'%')
-                    print('drumming fingers:',drumming_fingers,'%')
-                    print('pulling hand in:',pulling_hand_in,'%')
-                    print('pushing hand away:',pulling_hand_away,'%')
+                    print('other things:',other_things*100,'%')
+                    print('drumming fingers:',drumming_fingers*100,'%')
+                    print('pulling hand in:',pulling_hand_in*100,'%')
+                    print('pushing hand away:',pulling_hand_away*100,'%')
                     print(end-starttime)
                     print('===========================================')
                 else:
