@@ -1,3 +1,4 @@
+from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 import sys
 import requests
@@ -21,7 +22,7 @@ class RPIClient:
         print('sent:',msg,'\n')
 
     def connect(self):
-        ip='54.154.33.168'
+        ip='193.106.55.107'
         port = 5000
         ADDR=(ip,port)
         self.sock = socket(AF_INET, SOCK_STREAM)
@@ -30,13 +31,9 @@ class RPIClient:
         receive_thread = Thread(target=self.receive)
         receive_thread.start()
         print('Connected to server: ',ip,':',port,'successfully')
-        self.sock.sendall('Popcorn 1234 rasp'.encode()+'\r\n'.encode())
+        self.sock.sendall('elad@gmail.com 123 rasp'.encode()+'\r\n'.encode())
 
-##    def register(self):
-##        url="http://34.242.225.193:8080/sign"
-##        f=requests.post(url,data={'username':'dor','password':'1234','enabled':'1'})
-##        print(f)
-  
-
+s=RPIClient()
+s.connect()
         
         
