@@ -13,9 +13,9 @@ from keras.backend import tensorflow_backend as K
 
 
 class LazyModel:
-    def __init__(self,server=None,model_name='model5',num_of_batch=15):
+    def __init__(self,server=None,model_name='model_lstm',num_of_batch=15):
         self.camera=picamera.PiCamera()
-        self.camera.resolution = (132,100)
+        self.camera.resolution = (320,240)
         self.camera.rotation=180
         self.camera.framerate=10
         self.num_of_batch=num_of_batch
@@ -48,7 +48,7 @@ class LazyModel:
                     files=sorted(os.listdir(self.img_path))
                     for im in range(len(files)-self.num_of_batch,len(files)):
                         colored_image = Image.open(self.img_path+'/'+files[im]).convert('RGB')
-                        colored_image = colored_image.resize((100,132),Image.ANTIALIAS)
+                        colored_image = colored_image.resize((70,70),Image.ANTIALIAS)
                         colored_image = np.array(colored_image,dtype=np.float32)
                         colored_image = colored_image/255
                         t_colored_images.append(np.array(colored_image))
@@ -75,9 +75,9 @@ class LazyModel:
                     print('===========================================')
                     print(conclusion)
                     print('other things:',other_things*100,'%')
-                    print('drumming fingers:',drumming_fingers*100,'%')
-                    print('pulling hand in:',pulling_hand_in*100,'%')
-                    print('pushing hand away:',pulling_hand_away*100,'%')
+                    print('left:',drumming_fingers*100,'%')
+                    print('right:',pulling_hand_in*100,'%')
+                    print('ok:',pulling_hand_away*100,'%')
                     print(end-starttime)
                     print('===========================================')
                 else:
@@ -98,7 +98,7 @@ class LazyModel:
             #stream.seek(0)
             self.lock.acquire() # thread blocks at this line until it can obtain lock
     
-            if(len(os.listdir(self.img_path))==150):
+            if(len(os.listdir(self.img_path))== 60):
                 files=sorted(os.listdir(self.img_path))
                 self.remove_file(self.img_path+'/'+files[0])
             img = Image.open(stream)
@@ -110,24 +110,41 @@ class LazyModel:
             stream.truncate()
             
     
-    def start_camera(self,pic_resolution=[132,100]):
+    def start_camera(self,pic_resolution=[70,70]):
         self.camera.capture_sequence(self.outputs(), 'jpeg', use_video_port=True,resize=pic_resolution)
-
+    
+    def connection_manager(self):
+        while 1:
+            if self.stop==False:
+                if not self.s.connected:
+                    self.stop_all
+            elif self.s.connected:
+                self.resume
+            time.sleep(1)
     
     def start(self):
         with tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads=4)) as sess:
             K.set_session(sess)
-        self.model = load_model(self.model_name+'.h5py')
+        self.model = load_model('./Models/'+self.model_name+'.h5py')
         self.model._make_predict_function()
         self.graph = tf.get_default_graph()
         self.check_if_dir_exists()
-        t1=threading.Thread(target=self.start_camera).start()
-        t2=threading.Thread(target=self.predict).start()
-            
+        if self.s!=None:
+            self.t3=threading.Thread(target=self.connection_manager).start()
+        self.t1=threading.Thread(target=self.start_camera).start()
+        self.t2=threading.Thread(target=self.predict).start()
+        
+    def resume(self):
+        self.stop=False
+        self.t1.join()
+        self.t2.join()
+        self.t1.start()
+        self.t2.start()
+        
     def stop_all(self):
         self.stop=True
         if(os.path.isdir('images')):
             shutil.rmtree('images')
-        
-m=LazyModel()
-m.start()
+##        
+##m=LazyModel()
+##m.start()
