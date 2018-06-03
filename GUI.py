@@ -9,13 +9,10 @@ class GUI(threading.Thread):
     def __init__(self,lazynn=None):
         threading.Thread.__init__(self)
         self.lazynn=lazynn
-        self.is_training=False
     
     def execute(self):
         threading.Thread(target=self.train_model).start()
         
-    def isTraining(self):
-        return self.is_training
     
     def run(self):
         self.win=tk.Tk()
@@ -32,13 +29,13 @@ class GUI(threading.Thread):
         tk.mainloop()
     
     def train_model(self):
-        self.is_training=True
-        #self.laztnn.open_cam()
+        self.label['text']='Get ready...'
+        self.lazynn.is_training=True
+        if os.path.isfile('./Models/lazy_mod.h5py'):
+            time.sleep(10)
         cl_list=['left','right','up','down','ok']
         print("training...")
         self.label.config(text="Lets Start...")
-        time.sleep(2)
-        self.label['text']='Get ready...'
         time.sleep(2)
         for i in range(len(cl_list)):
             self.label['text']='Do '+cl_list[i]
@@ -56,8 +53,9 @@ class GUI(threading.Thread):
         self.label['text']='We are training...'
         self.lazynn.train()
         self.label['text']='We all set (='
-        time.sleep(1)
+        print('training finished')
         self.is_training=False
+        
         
 if __name__=='__main__':
     g=GUI()

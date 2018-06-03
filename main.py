@@ -12,7 +12,7 @@ while(not os.path.isfile('./Models/lazy_mod.h5py')):
 from RPIClient import RPIClient
 
 s=RPIClient()
-s.connect
+s.connect()
 
 from LazyModel import LazyModel
 

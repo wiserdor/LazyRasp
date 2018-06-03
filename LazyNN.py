@@ -24,11 +24,12 @@ class LazyNN:
     def __init__(self,camera,model_name='lazy_mod'):
         self.xs=None
         self.ys=None
+        self.is_training=False
         self.num_Of_Classes=5
         self.dense_size=8
         self.learning_rate=0.0001
         self.model_name=model_name
-        self.img_in_class=15
+        self.img_in_class=40
         self.img_num=0
         with tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads=4)) as sess:
             K.set_session(sess)
@@ -41,6 +42,7 @@ class LazyNN:
         else:
             self.model=None
         self.mobile=self.load_mobilenet()
+        
 
 
     
@@ -57,7 +59,7 @@ class LazyNN:
                 print("Escape hit, closing...")
                 break  
             img_name = "opencv_frame_{}.png".format(img_counter)
-            #cv2.imwrite(img_name, frame)
+            cv2.imwrite('./'+img_name, frame)
             img =cv2.resize(frame,dsize=(224,224), interpolation = cv2.INTER_CUBIC)
             np_image_data = np.asarray(img)
             np_image_data=cv2.normalize(np_image_data.astype('float'), None, -0.5, .5, cv2.NORM_MINMAX)

@@ -7,7 +7,7 @@ from PIL import Image
 
 
 class LazyModel:
-    def __init__(self,camera,gui,server=None,lann=None):
+    def __init__(self,camera,gui=None,server=None,lann=None):
         print('starting LazyModel.py')
         self.camera=camera
         self.gui=gui
@@ -83,14 +83,14 @@ class LazyModel:
     def connection_manager(self):
         while 1:
             if self.stop==False:
-                if not self.s.isConnected:
+                if not self.s.connected:
                     print('LazyModel: Not connected, stopping...')
                     self.stop_all()
-                elif self.gui.isTraining:
+                elif self.lann.is_training:
                     print('LazyModel: training new model, stopping...')
                     self.stop_all()
-            elif self.s.isConnected and not self.gui.isTraining:
-                self.resume
+            elif self.s.connected and not self.lann.is_training:
+                self.resume()
             time.sleep(1)
     
     def start(self):
@@ -103,8 +103,6 @@ class LazyModel:
         print('LazyModel: Resuming...')
         self.stop=False
         self.check_if_dir_exists()
-        self.t1.join()
-        self.t2.join()
         self.t1.start()
         self.t2.start()
         

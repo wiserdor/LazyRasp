@@ -14,7 +14,7 @@ class RPIClient:
         while True:
             try:
                 msg = self.sock.recv(1024).decode("utf-8")
-                print(msg,'\n')
+                #print(msg,'\n')
 ##                if "Connection is now available" in msg:
 ##                    self.connected=True
                 self.connected=True
