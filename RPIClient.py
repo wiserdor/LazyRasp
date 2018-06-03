@@ -6,6 +6,7 @@ import requests
 
 class RPIClient:
     def __init__(self):
+        print("starting RPIClient...")
         self.connected=False
     
     def receive(self):
@@ -14,11 +15,15 @@ class RPIClient:
             try:
                 msg = self.sock.recv(1024).decode("utf-8")
                 print(msg,'\n')
-                if "Connection is now available" in msg:
-                    self.connected=True
+##                if "Connection is now available" in msg:
+##                    self.connected=True
+                self.connected=True
             except OSError:  # Possibly client has left the chat.
                 break
 
+    def isConnected(self):
+        return self.connected
+        
     def send(self,msg):
         """ Handles sending messages. """
         if self.connected:
@@ -31,6 +36,7 @@ class RPIClient:
             print("not connected")
 
     def connect(self):
+        print("Trying to connect...")
         ip='193.106.55.107'
         port = 5000
         ADDR=(ip,port)
@@ -39,10 +45,10 @@ class RPIClient:
         receive_thread = Thread(target=self.receive)
         receive_thread.start()
         print('Connected to server: ',ip,':',port,'successfully')
-        self.sock.sendall('elad@gmail.com 123 rasp'.encode()+'\r\n'.encode())
+        self.sock.sendall('new@gmail.com 123 rasp'.encode()+'\r\n'.encode())
 
 #
-##s=RPIClient()
-##s.connect()
+#s=RPIClient()
+#s.connect()
         
         

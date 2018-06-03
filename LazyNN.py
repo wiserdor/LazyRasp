@@ -24,7 +24,7 @@ class LazyNN:
     def __init__(self,camera,model_name='lazy_mod'):
         self.xs=None
         self.ys=None
-        self.num_Of_Classes=6
+        self.num_Of_Classes=5
         self.dense_size=8
         self.learning_rate=0.0001
         self.model_name=model_name
@@ -48,9 +48,9 @@ class LazyNN:
     
     def capture(self,label):
         img_counter = 0
-        rawCapture = picamera.array.PiRGBArray(self.cam,size=tuple([800,600]))
+        rawCapture = PiRGBArray(self.camera,size=tuple([800,600]))
 
-        for f in self.cam.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+        for f in self.camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
             frame = f.array
             k = cv2.waitKey(1)
             if k%256 == 27:
@@ -79,10 +79,10 @@ class LazyNN:
         rawCapture.close()
         
     def open_cam(self):
-        self.cam=picamera.PiCamera()
-        self.cam.resolution = (800,600)
-        self.cam.rotation=180
-        self.cam.framerate=5
+        self.camera=picamera.PiCamera()
+        self.camera.resolution = (800,600)
+        self.camera.rotation=180
+        self.camera.framerate=5
         
         
     def addexample(self,label):

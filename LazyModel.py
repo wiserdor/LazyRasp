@@ -2,29 +2,22 @@ import time
 import io
 import os
 import shutil
-import h5py
 import threading
-import picamera
-import tensorflow as tf
-import numpy as np
 from PIL import Image
-from keras.models import load_model
-from keras.backend import tensorflow_backend as K
 
 
 class LazyModel:
-    def __init__(self,server=None,model_name='model_lstm',num_of_batch=15):
-        self.camera=picamera.PiCamera()
-        self.camera.resolution = (320,240)
+    def __init__(self,camera,gui,server=None,lann=None):
+        print('starting LazyModel.py')
+        self.camera=camera
+        self.gui=gui
+        self.camera.resolution = (800,608)
         self.camera.rotation=180
         self.camera.framerate=10
-        self.num_of_batch=num_of_batch
-        self.img_list=[]
         self.img_path='./images'
-        self.model_name=model_name
         self.s=server
+        self.lann=lann
         self.stop=False
-        self.graph = None
         self.lock = threading.Lock()
 
     def remove_file(self,file_path):
@@ -35,53 +28,24 @@ class LazyModel:
         if(not os.path.isdir(self.img_path)):
             os.makedirs('images')
        # lock.release()
+       
 
-    
     def predict(self):
-        print('prediction started')
-        with self.graph.as_default():  
-            while(not self.stop):
-                self.lock.acquire() # thread blocks at this line until it can obtain lock
-                if(len(os.listdir(self.img_path))>40):
-                    t_colored_images=[]
-                    t_labels=[]
-                    files=sorted(os.listdir(self.img_path))
-                    for im in range(len(files)-self.num_of_batch,len(files)):
-                        colored_image = Image.open(self.img_path+'/'+files[im]).convert('RGB')
-                        colored_image = colored_image.resize((70,70),Image.ANTIALIAS)
-                        colored_image = np.array(colored_image,dtype=np.float32)
-                        colored_image = colored_image/255
-                        t_colored_images.append(np.array(colored_image))
-                    self.lock.release()
-                    starttime=time.time()
-                    with self.graph.as_default():
-                        conclusion=self.model.predict(np.array(t_colored_images))
-                    end=time.time()
-                    
-                    other_things=0
-                    drumming_fingers=0
-                    pulling_hand_in=0
-                    pulling_hand_away=0
-                    for a in conclusion:
-                        other_things+=a[0]
-                        drumming_fingers+=a[1]
-                        pulling_hand_in+=a[2]
-                        pulling_hand_away+=a[3]
-                    print(other_things+drumming_fingers+pulling_hand_in+pulling_hand_away)
-                    other_things/=(self.num_of_batch)
-                    drumming_fingers/=(self.num_of_batch)
-                    pulling_hand_in/=(self.num_of_batch)
-                    pulling_hand_away/=(self.num_of_batch)
-                    print('===========================================')
-                    print(conclusion)
-                    print('other things:',other_things*100,'%')
-                    print('left:',drumming_fingers*100,'%')
-                    print('right:',pulling_hand_in*100,'%')
-                    print('ok:',pulling_hand_away*100,'%')
-                    print(end-starttime)
-                    print('===========================================')
-                else:
-                    self.lock.release()
+        print('LazyModel:prediction started')
+        while(not self.stop):
+            self.lock.acquire() # thread blocks at this line until it can obtain lock
+            if(len(os.listdir(self.img_path))>40):
+                files=sorted(os.listdir(self.img_path))
+                self.lock.release()
+                starttime=time.time()
+                conclusion=self.lann.predictme('./images/'+files[-1])
+                end=time.time()
+                print('===========================================')
+                print(end-starttime)
+                print('===========================================')
+            else:
+                self.lock.release()
+        print('LazyModel:predict stopped')
 
     
     def outputs(self):
@@ -108,34 +72,37 @@ class LazyModel:
             # Finally, reset the stream for the next capture
             stream.seek(0)
             stream.truncate()
+        print('LazyModel:outputs stopped')
+    
+    def start_camera(self,pic_resolution=[800,608]):
+        try:
+            self.camera.capture_sequence(self.outputs(), 'jpeg', use_video_port=True,resize=pic_resolution)
+        except:
+            print('LazyModel:camera stopped')
             
-    
-    def start_camera(self,pic_resolution=[70,70]):
-        self.camera.capture_sequence(self.outputs(), 'jpeg', use_video_port=True,resize=pic_resolution)
-    
     def connection_manager(self):
         while 1:
             if self.stop==False:
-                if not self.s.connected:
-                    self.stop_all
-            elif self.s.connected:
+                if not self.s.isConnected:
+                    print('LazyModel: Not connected, stopping...')
+                    self.stop_all()
+                elif self.gui.isTraining:
+                    print('LazyModel: training new model, stopping...')
+                    self.stop_all()
+            elif self.s.isConnected and not self.gui.isTraining:
                 self.resume
             time.sleep(1)
     
     def start(self):
-        with tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads=4)) as sess:
-            K.set_session(sess)
-        self.model = load_model('./Models/'+self.model_name+'.h5py')
-        self.model._make_predict_function()
-        self.graph = tf.get_default_graph()
         self.check_if_dir_exists()
-        if self.s!=None:
-            self.t3=threading.Thread(target=self.connection_manager).start()
+        self.t3=threading.Thread(target=self.connection_manager).start()
         self.t1=threading.Thread(target=self.start_camera).start()
         self.t2=threading.Thread(target=self.predict).start()
         
     def resume(self):
+        print('LazyModel: Resuming...')
         self.stop=False
+        self.check_if_dir_exists()
         self.t1.join()
         self.t2.join()
         self.t1.start()
@@ -145,6 +112,3 @@ class LazyModel:
         self.stop=True
         if(os.path.isdir('images')):
             shutil.rmtree('images')
-##        
-##m=LazyModel()
-##m.start()
